@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Flight Timestamp Logger</title>
+  <style>
+    :root {
+      --border: #1f2937;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --button: #e5e7eb;
+      --button-dark: #111827;
+      --danger: #fee2e2;
+      --danger-text: #991b1b;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 16px;
+      background: var(--bg);
+      color: #111827;
+    }
+
+    h1 {
+      margin-bottom: 6px;
+      font-size: 24px;
+    }
+
+    .note {
+      margin-top: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+      align-items: center;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 15px;
+      border: 1px solid #9ca3af;
+      border-radius: 6px;
+      min-width: 220px;
+    }
+
+    button {
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border: 1px solid #6b7280;
+      border-radius: 6px;
+      background: var(--button);
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .primary {
+      background: var(--button-dark);
+      color: white;
+    }
+
+    .danger {
+      background: var(--danger);
+      color: var(--danger-text);
+      border-color: #fca5a5;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--card);
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-size: 15px;
+    }
+
+    td.activity {
+      font-weight: 700;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Offline Flight Timestamp Logger</h1>
+  <p class="note">Works offline after opening the file. Data is saved on this device/browser using local storage.</p>
+
+  <div class="controls">
+    <input id="newActivity" type="text" placeholder="Add new activity, e.g. Gate Arrival" />
+    <button class="primary" onclick="addActivity()">Add Activity</button>
+    <button class="danger" onclick="clearAllTimes()">Clear All Times</button>
+    <button onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Clear Time Button</th>
+          <th>Timestamp</th>
+          <th>London Time</th>
+          <th>Activity</th>
+          <th>Manual Time</th>
+          <th>PH Time</th>
+          <th>Remove Activity</th>
+        </tr>
+      </thead>
+      <tbody id="activityTable"></tbody>
+    </table>
+  </div>
+
+  <p class="small">
+    Note: London time is based on Europe/London and automatically adjusts for UK daylight saving time.
+    PH time is based on Asia/Manila.
+  </p>
+
+  <script>
+    const STORAGE_KEY = "flightTimestampLoggerData";
+
+    const defaultActivities = [
+      "Landing",
+      "Shuttle",
+      "Takeoff",
+      "Taxi",
+      "Gate",
+      "Immigration"
+    ];
+
+    let activities = loadData();
+
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+
+      return defaultActivities.map(name => ({
+        name,
+        londonTime: "",
+        phTime: "",
+        manualTime: ""
+      }));
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
+    }
+
+    function formatTime(date, timeZone) {
+      return new Intl.DateTimeFormat("en-GB", {
+        timeZone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).format(date);
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("activityTable");
+      tbody.innerHTML = "";
+
+      activities.forEach((activity, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td><button class="danger" onclick="clearTime(${index})">Clear Time</button></td>
+          <td><button onclick="timestamp(${index})">Time</button></td>
+          <td>${activity.londonTime || ""}</td>
+          <td class="activity">${activity.name}</td>
+          <td contenteditable="true" oninput="updateManualTime(${index}, this.innerText)">${activity.manualTime || ""}</td>
+          <td>${activity.phTime || ""}</td>
+          <td><button class="danger" onclick="removeActivity(${index})">Remove</button></td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function timestamp(index) {
+      const now = new Date();
+
+      activities[index].londonTime = formatTime(now, "Europe/London");
+      activities[index].phTime = formatTime(now, "Asia/Manila");
+
+      saveData();
+      renderTable();
+    }
+
+    function clearTime(index) {
+      activities[index].londonTime = "";
+      activities[index].phTime = "";
+      activities[index].manualTime = "";
+
+      saveData();
+      renderTable();
+    }
+
+    function clearAllTimes() {
+      activities = activities.map(activity => ({
+        ...activity,
+        londonTime: "",
+        phTime: "",
+        manualTime: ""
+      }));
+
+      saveData();
+      renderTable();
+    }
+
+    function addActivity() {
+      const input = document.getElementById("newActivity");
+      const name = input.value.trim();
+
+      if (!name) return;
+
+      activities.push({
+        name,
+        londonTime: "",
+        phTime: "",
+        manualTime: ""
+      });
+
+      input.value = "";
+      saveData();
+      renderTable();
+    }
+
+    function removeActivity(index) {
+      activities.splice(index, 1);
+      saveData();
+      renderTable();
+    }
+
+    function updateManualTime(index, value) {
+      activities[index].manualTime = value.trim();
+      saveData();
+    }
+
+    function exportCSV() {
+      const header = ["London Time", "Activity", "Manual Time", "PH Time"];
+      const rows = activities.map(a => [
+        a.londonTime,
+        a.name,
+        a.manualTime,
+        a.phTime
+      ]);
+
+      const csv = [header, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "flight_timestamp_log.csv";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
