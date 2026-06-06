@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flight Stamp Pro</title>
+  <title>Flight Timestamp</title>
   <style>
     :root {
       --bg: #07111f;
@@ -28,7 +28,7 @@
     }
 
     .app {
-      width: min(100%, 980px);
+      width: min(100%, 1100px);
       margin: 0 auto;
       padding: 16px;
     }
@@ -42,7 +42,7 @@
 
     .top-panel {
       display: grid;
-      grid-template-columns: 1fr 160px;
+      grid-template-columns: 1fr 170px;
       gap: 10px;
       margin-bottom: 12px;
     }
@@ -96,6 +96,7 @@
       font-weight: 800;
       cursor: pointer;
       min-height: 44px;
+      white-space: nowrap;
     }
 
     button:active { transform: scale(0.98); }
@@ -117,14 +118,22 @@
       border-color: #64748b;
     }
 
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 6px;
+    }
+
     .activity-list {
       display: grid;
       gap: 8px;
+      min-width: 880px;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 110px 1fr 110px 118px 118px;
+      grid-template-columns: 115px 1.5fr 110px 140px 140px;
       gap: 8px;
       align-items: stretch;
     }
@@ -148,7 +157,7 @@
     }
 
     .activity-cell {
-      font-size: clamp(16px, 4vw, 22px);
+      font-size: clamp(16px, 3vw, 22px);
       font-weight: 900;
       justify-content: center;
     }
@@ -168,7 +177,7 @@
 
     .add-panel {
       display: grid;
-      grid-template-columns: 1fr 140px;
+      grid-template-columns: 1fr 150px;
       gap: 8px;
       margin-top: 14px;
       padding-top: 12px;
@@ -183,65 +192,30 @@
       line-height: 1.4;
     }
 
-    @media (max-width: 760px) {
-      .app { padding: 12px; }
+    @media (max-width: 600px) {
+      .app { padding: 10px; }
 
       .top-panel {
-        grid-template-columns: 1fr 130px;
+        grid-template-columns: 1fr;
       }
 
-      .row {
-        grid-template-columns: 82px 1fr 78px;
-        gap: 6px;
+      .add-panel {
+        grid-template-columns: 1fr;
       }
 
-      .table-head .manual-head,
-      .table-head .ph-head,
-      .manual-col,
-      .ph-col {
-        display: none;
+      .activity-list {
+        min-width: 920px;
       }
 
-      .cell {
-        min-height: 46px;
-        padding: 10px 8px;
-      }
-
-      button {
-        padding: 10px 8px;
-        font-size: 14px;
-      }
-
-      .activity-cell { font-size: 18px; }
-      .time-cell { font-size: 16px; }
-
-      .add-panel { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 420px) {
-      .row { grid-template-columns: 76px 1fr 72px; }
-      .top-panel { grid-template-columns: 1fr; }
-      .date-box { justify-content: center; }
-      .activity-cell { font-size: 16px; }
-    }
-
-    @media print {
-      body { background: white; color: black; }
-      .controls, .add-panel, .note, button { display: none; }
-      .app { width: 100%; }
-      .cell { color: black; background: white; }
-      .row { grid-template-columns: 120px 1fr 120px 120px 120px; }
-      .manual-col, .ph-col,
-      .table-head .manual-head,
-      .table-head .ph-head {
-        display: flex;
+      h1 {
+        font-size: 30px;
       }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <h1>FLIGHT STAMP Pro</h1>
+    <h1>Flight Timestamp</h1>
 
     <section class="top-panel">
       <input id="flightNumber" type="text" placeholder="Enter Flight #" />
@@ -255,7 +229,9 @@
       <button class="btn-neutral" onclick="exportCSV()">Export CSV</button>
     </section>
 
-    <section class="activity-list" id="activityList"></section>
+    <section class="table-scroll">
+      <section class="activity-list" id="activityList"></section>
+    </section>
 
     <section class="add-panel">
       <input id="newActivity" type="text" placeholder="Add new activity" />
@@ -263,26 +239,14 @@
     </section>
 
     <p class="note">
-      Main visible time is London time. PH time is also saved and exported.
-      Data stays on the same device/browser unless website data is cleared.
+      On phones, swipe left/right on the table to view all columns. Data stays on the same device/browser unless website data is cleared.
     </p>
   </main>
 
   <script>
-    const STORAGE_KEY = "flightStampProData_v2";
+    const STORAGE_KEY = "flightTimestampData_v3";
 
     const defaultActivities = [
-      "Refuel Complete",
-      "Fuel Receipt",
-      "Last Pax Boarding",
-      "Request Cabin Door Close",
-      "Doors Closed",
-      "RC (Clearance Delivery)",
-      "CR (Clearance Received)",
-      "SC (Startup Request)",
-      "SR (Startup Received)",
-      "RP (Request PB)",
-      "PR (PB Received)",
       "Shuttle",
       "Airport",
       "Immigration",
@@ -293,7 +257,18 @@
       "Pax Boarding Request",
       "Prelim Loadsheet",
       "Final Loadsheet",
-      "Cargo Door Closed"
+      "Cargo Door Closed",
+      "Refuel Complete",
+      "Fuel Receipt",
+      "Last Pax Boarding",
+      "Request Cabin Door Close",
+      "Doors Closed",
+      "RC (Clearance Delivery)",
+      "CR (Clearance Received)",
+      "SC (Startup Request)",
+      "SR (Startup Received)",
+      "RP (Request PB)",
+      "PR (PB Received)"
     ];
 
     let data = loadData();
@@ -314,8 +289,8 @@
         activities: defaultActivities.map(name => ({
           name,
           londonTime: "",
-          phTime: "",
-          manualTime: ""
+          manualTime: "",
+          phTime: ""
         }))
       };
     }
@@ -351,11 +326,11 @@
       const header = document.createElement("div");
       header.className = "row table-head";
       header.innerHTML = `
-        <div class="cell">Time</div>
+        <div class="cell">London Time</div>
         <div class="cell">Activity</div>
-        <div class="cell">Clear</div>
-        <div class="cell manual-head">Manual</div>
-        <div class="cell ph-head">PH Time</div>
+        <div class="cell">Clear Time</div>
+        <div class="cell">Manual Time</div>
+        <div class="cell">PH Time</div>
       `;
       list.appendChild(header);
 
@@ -367,8 +342,8 @@
           <button class="btn-main" onclick="timestamp(${index})">${activity.londonTime || "Tap"}</button>
           <div class="cell activity-cell">${escapeHTML(activity.name)}</div>
           <button class="btn-clear" onclick="clearTime(${index})">Clear</button>
-          <input class="manual-input manual-col" value="${escapeHTML(activity.manualTime || "")}" oninput="updateManualTime(${index}, this.value)" placeholder="Manual" />
-          <div class="cell time-cell ph-col">${activity.phTime || ""}</div>
+          <input class="manual-input" value="${escapeHTML(activity.manualTime || "")}" oninput="updateManualTime(${index}, this.value)" placeholder="Manual" />
+          <div class="cell time-cell">${activity.phTime || ""}</div>
         `;
 
         list.appendChild(row);
@@ -385,8 +360,8 @@
 
     function clearTime(index) {
       data.activities[index].londonTime = "";
-      data.activities[index].phTime = "";
       data.activities[index].manualTime = "";
+      data.activities[index].phTime = "";
       saveData();
       render();
     }
@@ -395,8 +370,8 @@
       data.activities = data.activities.map(activity => ({
         ...activity,
         londonTime: "",
-        phTime: "",
-        manualTime: ""
+        manualTime: "",
+        phTime: ""
       }));
       saveData();
       render();
@@ -411,8 +386,8 @@
       data.activities.push({
         name,
         londonTime: "",
-        phTime: "",
-        manualTime: ""
+        manualTime: "",
+        phTime: ""
       });
 
       input.value = "";
@@ -445,7 +420,7 @@
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `flight_stamp_${flightNumber || "log"}.csv`;
+      a.download = `flight_timestamp_${flightNumber || "log"}.csv`;
       a.click();
 
       URL.revokeObjectURL(url);
