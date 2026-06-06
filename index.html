@@ -3,174 +3,335 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offline Flight Timestamp Logger</title>
+  <title>Flight Stamp Pro</title>
   <style>
     :root {
-      --border: #1f2937;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --button: #e5e7eb;
-      --button-dark: #111827;
-      --danger: #fee2e2;
-      --danger-text: #991b1b;
+      --bg: #07111f;
+      --card: #0f172a;
+      --card2: #111827;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #64748b;
+      --green: #22c55e;
+      --cyan: #22d3ee;
+      --danger-dark: #7f1d1d;
+      --input: #020617;
     }
 
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 16px;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
       background: var(--bg);
-      color: #111827;
+      color: var(--text);
+    }
+
+    .app {
+      width: min(100%, 980px);
+      margin: 0 auto;
+      padding: 16px;
     }
 
     h1 {
-      margin-bottom: 6px;
-      font-size: 24px;
+      text-align: center;
+      margin: 8px 0 14px;
+      font-size: clamp(26px, 6vw, 44px);
+      letter-spacing: 1px;
     }
 
-    .note {
-      margin-top: 0;
-      color: #4b5563;
-      font-size: 14px;
+    .top-panel {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    input, button { font: inherit; }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .date-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .header-bar {
+      background: var(--green);
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(20px, 5vw, 32px);
+      border-radius: 4px;
+      margin: 10px 0 12px;
     }
 
     .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 16px 0;
-      align-items: center;
-    }
-
-    input {
-      padding: 10px;
-      font-size: 15px;
-      border: 1px solid #9ca3af;
-      border-radius: 6px;
-      min-width: 220px;
+      margin-bottom: 12px;
     }
 
     button {
-      padding: 10px 12px;
-      font-size: 15px;
-      font-weight: 700;
-      border: 1px solid #6b7280;
-      border-radius: 6px;
-      background: var(--button);
-      cursor: pointer;
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .primary {
-      background: var(--button-dark);
-      color: white;
-    }
-
-    .danger {
-      background: var(--danger);
-      color: var(--danger-text);
-      border-color: #fca5a5;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      background: var(--card);
-      border: 1px solid #d1d5db;
+      border: 1px solid transparent;
       border-radius: 8px;
+      padding: 11px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      min-height: 44px;
     }
 
-    table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
+    button:active { transform: scale(0.98); }
+
+    .btn-main {
+      background: var(--cyan);
+      color: #083344;
     }
 
-    th, td {
+    .btn-clear {
+      background: var(--danger-dark);
+      color: #fecaca;
+      border-color: #f87171;
+    }
+
+    .btn-neutral {
+      background: #334155;
+      color: white;
+      border-color: #64748b;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 110px 1fr 110px 118px 118px;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .cell {
       border: 1px solid var(--border);
-      padding: 10px;
+      background: var(--card);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
       text-align: center;
-      vertical-align: middle;
     }
 
-    th {
-      background: #f3f4f6;
-      font-size: 15px;
+    .time-cell {
+      font-size: 18px;
+      font-weight: 900;
+      color: #67e8f9;
     }
 
-    td.activity {
-      font-weight: 700;
+    .activity-cell {
+      font-size: clamp(16px, 4vw, 22px);
+      font-weight: 900;
+      justify-content: center;
     }
 
-    .small {
-      font-size: 12px;
-      color: #6b7280;
+    .manual-input {
+      min-height: 50px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .table-head {
+      font-weight: 900;
+      color: white;
+      background: #1e293b;
+      border-color: #94a3b8;
+    }
+
+    .add-panel {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #334155;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
       margin-top: 12px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 760px) {
+      .app { padding: 12px; }
+
+      .top-panel {
+        grid-template-columns: 1fr 130px;
+      }
+
+      .row {
+        grid-template-columns: 82px 1fr 78px;
+        gap: 6px;
+      }
+
+      .table-head .manual-head,
+      .table-head .ph-head,
+      .manual-col,
+      .ph-col {
+        display: none;
+      }
+
+      .cell {
+        min-height: 46px;
+        padding: 10px 8px;
+      }
+
+      button {
+        padding: 10px 8px;
+        font-size: 14px;
+      }
+
+      .activity-cell { font-size: 18px; }
+      .time-cell { font-size: 16px; }
+
+      .add-panel { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 420px) {
+      .row { grid-template-columns: 76px 1fr 72px; }
+      .top-panel { grid-template-columns: 1fr; }
+      .date-box { justify-content: center; }
+      .activity-cell { font-size: 16px; }
+    }
+
+    @media print {
+      body { background: white; color: black; }
+      .controls, .add-panel, .note, button { display: none; }
+      .app { width: 100%; }
+      .cell { color: black; background: white; }
+      .row { grid-template-columns: 120px 1fr 120px 120px 120px; }
+      .manual-col, .ph-col,
+      .table-head .manual-head,
+      .table-head .ph-head {
+        display: flex;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Offline Flight Timestamp Logger</h1>
-  <p class="note">Works offline after opening the file. Data is saved on this device/browser using local storage.</p>
+  <main class="app">
+    <h1>FLIGHT STAMP Pro</h1>
 
-  <div class="controls">
-    <input id="newActivity" type="text" placeholder="Add new activity, e.g. Gate Arrival" />
-    <button class="primary" onclick="addActivity()">Add Activity</button>
-    <button class="danger" onclick="clearAllTimes()">Clear All Times</button>
-    <button onclick="exportCSV()">Export CSV</button>
-  </div>
+    <section class="top-panel">
+      <input id="flightNumber" type="text" placeholder="Enter Flight #" />
+      <div class="date-box" id="dateToday"></div>
+    </section>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Clear Time Button</th>
-          <th>Timestamp</th>
-          <th>London Time</th>
-          <th>Activity</th>
-          <th>Manual Time</th>
-          <th>PH Time</th>
-          <th>Remove Activity</th>
-        </tr>
-      </thead>
-      <tbody id="activityTable"></tbody>
-    </table>
-  </div>
+    <div class="header-bar">Time | Tasks/Events</div>
 
-  <p class="small">
-    Note: London time is based on Europe/London and automatically adjusts for UK daylight saving time.
-    PH time is based on Asia/Manila.
-  </p>
+    <section class="controls">
+      <button class="btn-clear" onclick="clearAllTimes()">Clear All Times</button>
+      <button class="btn-neutral" onclick="exportCSV()">Export CSV</button>
+    </section>
+
+    <section class="activity-list" id="activityList"></section>
+
+    <section class="add-panel">
+      <input id="newActivity" type="text" placeholder="Add new activity" />
+      <button class="btn-main" onclick="addActivity()">Add Activity</button>
+    </section>
+
+    <p class="note">
+      Main visible time is London time. PH time is also saved and exported.
+      Data stays on the same device/browser unless website data is cleared.
+    </p>
+  </main>
 
   <script>
-    const STORAGE_KEY = "flightTimestampLoggerData";
+    const STORAGE_KEY = "flightStampProData_v2";
 
     const defaultActivities = [
-      "Landing",
+      "Refuel Complete",
+      "Fuel Receipt",
+      "Last Pax Boarding",
+      "Request Cabin Door Close",
+      "Doors Closed",
+      "RC (Clearance Delivery)",
+      "CR (Clearance Received)",
+      "SC (Startup Request)",
+      "SR (Startup Received)",
+      "RP (Request PB)",
+      "PR (PB Received)",
       "Shuttle",
-      "Takeoff",
-      "Taxi",
+      "Airport",
+      "Immigration",
       "Gate",
-      "Immigration"
+      "FDC Boarding",
+      "CC Boarding",
+      "A/C Maintenance Release",
+      "Pax Boarding Request",
+      "Prelim Loadsheet",
+      "Final Loadsheet",
+      "Cargo Door Closed"
     ];
 
-    let activities = loadData();
+    let data = loadData();
 
     function loadData() {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
 
-      return defaultActivities.map(name => ({
-        name,
-        londonTime: "",
-        phTime: "",
-        manualTime: ""
-      }));
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (error) {
+          console.warn("Saved data could not be read. Loading defaults.");
+        }
+      }
+
+      return {
+        flightNumber: "",
+        activities: defaultActivities.map(name => ({
+          name,
+          londonTime: "",
+          phTime: "",
+          manualTime: ""
+        }))
+      };
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
+      data.flightNumber = document.getElementById("flightNumber").value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function formatDateToday() {
+      const now = new Date();
+      document.getElementById("dateToday").textContent = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      }).format(now);
     }
 
     function formatTime(date, timeZone) {
@@ -183,56 +344,62 @@
       }).format(date);
     }
 
-    function renderTable() {
-      const tbody = document.getElementById("activityTable");
-      tbody.innerHTML = "";
+    function render() {
+      const list = document.getElementById("activityList");
+      list.innerHTML = "";
 
-      activities.forEach((activity, index) => {
-        const row = document.createElement("tr");
+      const header = document.createElement("div");
+      header.className = "row table-head";
+      header.innerHTML = `
+        <div class="cell">Time</div>
+        <div class="cell">Activity</div>
+        <div class="cell">Clear</div>
+        <div class="cell manual-head">Manual</div>
+        <div class="cell ph-head">PH Time</div>
+      `;
+      list.appendChild(header);
+
+      data.activities.forEach((activity, index) => {
+        const row = document.createElement("div");
+        row.className = "row";
 
         row.innerHTML = `
-          <td><button class="danger" onclick="clearTime(${index})">Clear Time</button></td>
-          <td><button onclick="timestamp(${index})">Time</button></td>
-          <td>${activity.londonTime || ""}</td>
-          <td class="activity">${activity.name}</td>
-          <td contenteditable="true" oninput="updateManualTime(${index}, this.innerText)">${activity.manualTime || ""}</td>
-          <td>${activity.phTime || ""}</td>
-          <td><button class="danger" onclick="removeActivity(${index})">Remove</button></td>
+          <button class="btn-main" onclick="timestamp(${index})">${activity.londonTime || "Tap"}</button>
+          <div class="cell activity-cell">${escapeHTML(activity.name)}</div>
+          <button class="btn-clear" onclick="clearTime(${index})">Clear</button>
+          <input class="manual-input manual-col" value="${escapeHTML(activity.manualTime || "")}" oninput="updateManualTime(${index}, this.value)" placeholder="Manual" />
+          <div class="cell time-cell ph-col">${activity.phTime || ""}</div>
         `;
 
-        tbody.appendChild(row);
+        list.appendChild(row);
       });
     }
 
     function timestamp(index) {
       const now = new Date();
-
-      activities[index].londonTime = formatTime(now, "Europe/London");
-      activities[index].phTime = formatTime(now, "Asia/Manila");
-
+      data.activities[index].londonTime = formatTime(now, "Europe/London");
+      data.activities[index].phTime = formatTime(now, "Asia/Manila");
       saveData();
-      renderTable();
+      render();
     }
 
     function clearTime(index) {
-      activities[index].londonTime = "";
-      activities[index].phTime = "";
-      activities[index].manualTime = "";
-
+      data.activities[index].londonTime = "";
+      data.activities[index].phTime = "";
+      data.activities[index].manualTime = "";
       saveData();
-      renderTable();
+      render();
     }
 
     function clearAllTimes() {
-      activities = activities.map(activity => ({
+      data.activities = data.activities.map(activity => ({
         ...activity,
         londonTime: "",
         phTime: "",
         manualTime: ""
       }));
-
       saveData();
-      renderTable();
+      render();
     }
 
     function addActivity() {
@@ -241,7 +408,7 @@
 
       if (!name) return;
 
-      activities.push({
+      data.activities.push({
         name,
         londonTime: "",
         phTime: "",
@@ -250,27 +417,23 @@
 
       input.value = "";
       saveData();
-      renderTable();
-    }
-
-    function removeActivity(index) {
-      activities.splice(index, 1);
-      saveData();
-      renderTable();
+      render();
     }
 
     function updateManualTime(index, value) {
-      activities[index].manualTime = value.trim();
+      data.activities[index].manualTime = value;
       saveData();
     }
 
     function exportCSV() {
-      const header = ["London Time", "Activity", "Manual Time", "PH Time"];
-      const rows = activities.map(a => [
-        a.londonTime,
-        a.name,
-        a.manualTime,
-        a.phTime
+      const flightNumber = document.getElementById("flightNumber").value || "";
+      const header = ["Flight Number", "London Time", "Activity", "Manual Time", "PH Time"];
+      const rows = data.activities.map(activity => [
+        flightNumber,
+        activity.londonTime,
+        activity.name,
+        activity.manualTime,
+        activity.phTime
       ]);
 
       const csv = [header, ...rows]
@@ -282,13 +445,29 @@
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = "flight_timestamp_log.csv";
+      a.download = `flight_stamp_${flightNumber || "log"}.csv`;
       a.click();
 
       URL.revokeObjectURL(url);
     }
 
-    renderTable();
+    function escapeHTML(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    document.getElementById("flightNumber").value = data.flightNumber || "";
+    document.getElementById("flightNumber").addEventListener("input", saveData);
+    document.getElementById("newActivity").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") addActivity();
+    });
+
+    formatDateToday();
+    render();
   </script>
 </body>
 </html>
