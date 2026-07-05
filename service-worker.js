@@ -1,4 +1,4 @@
-const CACHE_NAME = "flight-timestamp-zulu-v6";
+const CACHE_NAME = "aero-timestamp-v7";
 const FILES_TO_CACHE = ["./", "./index.html", "./manifest.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE)));
