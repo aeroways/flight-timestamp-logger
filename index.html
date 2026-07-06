@@ -15,17 +15,17 @@
 </head>
 <body>
   <main class="app">
-    <h1>Aero Timestamp</h1><div class="version">v8</div>
+    <h1>Aero Timestamp</h1><div class="version">v9.0</div>
     <section class="top-panel"><input id="flightNumber" type="text" placeholder="Enter Flight #" /><div class="date-box" id="dateToday"></div></section>
     <div class="header-bar">Time | Tasks/Events</div>
-    <section class="controls"><button class="btn-undo" id="undoButton" onclick="undoLastAction()" disabled>Undo</button><button class="btn-clear" onclick="clearAllTimes()">Clear All Times</button><button class="btn-neutral" onclick="exportCSV()">Export CSV</button></section>
+    <section class="controls"><button class="btn-undo" id="undoButton" onclick="undoLastAction()">Undo</button><button class="btn-undo" id="redoButton" onclick="redoLastAction()">Redo</button><button class="btn-clear" onclick="clearAllTimes()">Clear All Times</button><button class="btn-neutral" onclick="exportCSV()">Export CSV</button></section>
     <section class="table-scroll"><section class="activity-list" id="activityList"></section></section>
     <section class="add-panel"><input id="newActivity" type="text" placeholder="Add new activity" /><button class="btn-main" onclick="addActivity()">Add Activity</button></section>
     <p class="note">On phones, swipe left/right on the table to view all columns. Zulu time is UTC. Data stays on the same device/browser unless website data is cleared.</p>
   </main>
   <script>
     if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./service-worker.js?v=8").then(r=>{r.update();if(r.waiting)r.waiting.postMessage({type:"SKIP_WAITING"});r.addEventListener("updatefound",()=>{const w=r.installing;if(w)w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)w.postMessage({type:"SKIP_WAITING"})})})});navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!sessionStorage.getItem("aeroReloadedV8")){sessionStorage.setItem("aeroReloadedV8","1");location.reload()}})})}
-    const STORAGE_KEY="aeroTimestampData_v8";const UNDO_KEY="aeroTimestampUndo_v8";
+    const STORAGE_KEY="aeroTimestampData_v9.0";const UNDO_KEY="aeroTimestampUndo_v9.0";
     const defaultActivities=["Shuttle","Airport","Immigration","Gate","FDC Boarding","CC Boarding","A/C Maintenance Release","Pax Boarding Request","Prelim Loadsheet","Final Loadsheet","Cargo Door Closed","Refuel Complete","Fuel Receipt","Last Pax Boarding","Request Cabin Door Close","Doors Closed","RC (Clearance Delivery)","CR (Clearance Received)","SC (Startup Request)","SR (Startup Received)","RP (Request PB)","PR (PB Received)","Out","Off","On","In"];
     let data=loadData();
     function loadData(){const saved=localStorage.getItem(STORAGE_KEY);if(saved){try{return JSON.parse(saved)}catch(e){console.warn("Saved data could not be read. Loading defaults.")}}return{flightNumber:"",activities:defaultActivities.map(name=>({name,zuluTime:"",manualTime:"",phTime:""}))}}
@@ -41,6 +41,12 @@
     function exportCSV(){const flightNumber=document.getElementById("flightNumber").value||"";const header=["Flight Number","Zulu Time","Activity","Manual Time","PH Time"];const rows=data.activities.map(activity=>[flightNumber,activity.zuluTime||"",activity.name,activity.manualTime,activity.phTime]);const csv=[header,...rows].map(row=>row.map(cell=>`"${String(cell).replaceAll('"','""')}"`).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`aero_timestamp_${flightNumber||"log"}.csv`;a.click();URL.revokeObjectURL(url)}
     function escapeHTML(text){return String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
     document.getElementById("flightNumber").value=data.flightNumber||"";document.getElementById("flightNumber").addEventListener("input",saveData);document.getElementById("newActivity").addEventListener("keydown",function(event){if(event.key==="Enter")addActivity()});formatDateToday();render();
-  </script>
+  
+const UNDO_STACK_KEY="undoStack_v9";const REDO_STACK_KEY="redoStack_v9";
+function gs(k){return JSON.parse(localStorage.getItem(k)||"[]")}function ss(k,v){localStorage.setItem(k,JSON.stringify(v.slice(-50)))}
+saveUndoSnapshot=function(){let a=gs(UNDO_STACK_KEY);a.push(JSON.parse(JSON.stringify(data)));ss(UNDO_STACK_KEY,a);ss(REDO_STACK_KEY,[]);}
+undoLastAction=function(){let u=gs(UNDO_STACK_KEY);if(!u.length)return;let r=gs(REDO_STACK_KEY);r.push(JSON.parse(JSON.stringify(data)));data=u.pop();ss(UNDO_STACK_KEY,u);ss(REDO_STACK_KEY,r);saveData();render();}
+redoLastAction=function(){let r=gs(REDO_STACK_KEY);if(!r.length)return;let u=gs(UNDO_STACK_KEY);u.push(JSON.parse(JSON.stringify(data)));data=r.pop();ss(UNDO_STACK_KEY,u);ss(REDO_STACK_KEY,r);saveData();render();}
+</script>
 </body>
 </html>
